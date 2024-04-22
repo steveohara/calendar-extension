@@ -1,0 +1,27 @@
+{
+  "name": "Google Calendar Additions",
+  "version": "1.0.0",
+  "description": "Adds some useful view features to Google Calendar",
+  "manifest_version": 3,
+  "author": "Steve O'Hara",
+  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "webNavigation",
+    "scripting",
+    "tabs",
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "google_calendar_icon_16.png",
+    "48": "google_calendar_icon_48.png",
+    "128": "google_calendar_icon_128.png"
+  }
+}
