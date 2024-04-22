@@ -58,7 +58,12 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
       chrome.contextMenus.update(key, {checked: newValue});
     }
     storageCache[key] = newValue;
-    chrome.tabs.reload();
+
+    chrome.tabs.query({url: "https://calendar.google.com/calendar/u/0/r*"}, function(tabs) {
+      tabs.forEach(function(tab) {
+        chrome.tabs.reload(tab.id);
+      })
+    });
   }
 });
 
