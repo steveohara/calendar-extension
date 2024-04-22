@@ -12,8 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Attach to anything and everything
+window.addEventListener("load", hideOptionalEvents);
+window.addEventListener("DOMContentLoaded", hideOptionalEvents);
+hideOptionalEvents();
+
 // There's a good chance that Google will change the classes that denote optional
 // events but for the time being, this works pretty well
-document.querySelectorAll("div.GTG3wb.Epw9Dc").forEach(function(element, index) {
-  element.style.display = "none";
-})
+function hideOptionalEvents() {
+ document.querySelectorAll("div.GTG3wb.Epw9Dc").forEach(function(element, index) {
+    element.style.display = "none";
+  });
+}
+
+// The day view seems to refresh so we need to make sure we
+// run this again
+setTimeout(hideOptionalEvents, 1000);
