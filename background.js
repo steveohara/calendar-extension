@@ -13,58 +13,67 @@
 // limitations under the License.
 
 // Where we will expose all the data we retrieve from storage.sync.
-const storageCache = { hideOptionalEvents: false };
+const storageCache = { optionalEvents: "showOptionalEvents" };
 
 // Asynchronously retrieve data from storage.sync, then cache it.
 const initStorageCache = chrome.storage.sync.get().then((items) => {
-  // Copy the data retrieved from storage into storageCache.
   Object.assign(storageCache, items);
 });
 
 // A generic onclick callback function
 chrome.contextMenus.onClicked.addListener(genericOnClick);
 
-// A generic onclick callback function.
+/**
+ * The menu click callback function
+ *
+ * @param info Details of the menu item clicked
+ */
 function genericOnClick(info) {
-  switch (info.menuItemId) {
-    case 'hideOptionalEvents':
-      storageCache.hideOptionalEvents = info.checked;
-      chrome.storage.sync.set(storageCache);
-      console.log('Changed state of hide optional events Status:', info.checked);
-      break;
-    default:
-      console.log('Standard context menu item clicked.');
-  }
+  storageCache.optionalEvents = info.menuItemId;
+  chrome.storage.sync.set(storageCache);
 }
 
-// On installation, create the context menu
+// On installation, create the context menus
 chrome.runtime.onInstalled.addListener(function () {
 
   // Create the menu item list for just the 'page' context
   // Others available are; 'selection', 'link', 'editable', 'image', 'video', 'audio'
   chrome.contextMenus.create({
-    title: 'Hide optional events',
-    type: 'checkbox',
+    title: 'Show optional events',
+    type: 'radio',
     contexts: ['page'],
-    checked: storageCache.hideOptionalEvents,
+    checked: storageCache.optionalEvents === "hideOptionalEvents",
+    id: 'showOptionalEvents'
+  });
+  chrome.contextMenus.create({
+    title: 'Hide optional events',
+    type: 'radio',
+    contexts: ['page'],
+    checked: storageCache.optionalEvents === "hideOptionalEvents",
     id: 'hideOptionalEvents'
+  });
+  chrome.contextMenus.create({
+    title: 'De-Emphasise optional events',
+    type: 'radio',
+    contexts: ['page'],
+    checked: storageCache.optionalEvents === "deEmphasiseOptionalEvents",
+    id: 'deEmphasiseOptionalEvents'
   });
 });
 
 // Catch any changes to the storage whether they come from the context menu or the popup
 chrome.storage.onChanged.addListener((changes, namespace) => {
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-    if (key === 'hideOptionalEvents') {
-      chrome.contextMenus.update(key, {checked: newValue});
-    }
+    chrome.contextMenus.update(newValue, {checked: true});
     storageCache[key] = newValue;
-
-    chrome.tabs.query({url: "https://calendar.google.com/calendar/u/0/r*"}, function(tabs) {
-      tabs.forEach(function(tab) {
-        chrome.tabs.reload(tab.id);
-      })
-    });
   }
+
+  // Reload any calendar tabs
+  chrome.tabs.query({url: "https://calendar.google.com/calendar/u/0/r*"}, function(tabs) {
+    tabs.forEach(function(tab) {
+      chrome.tabs.reload(tab.id);
+    })
+  });
 });
 
 // Catch the loading of pages from scratch
@@ -72,10 +81,38 @@ chrome.webNavigation.onCompleted.addListener((details) => {
   checkAction(details)
 });
 
-// Catch the pge updates through the SPA
+// Catch the page updates through the SPA
 chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
   checkAction(details)
 });
+
+
+/**
+ * This function is injected into the Calendar document space and carries
+ * out the maniplation of the DOM based on the action
+ *
+ * @param action Type of action to carry out
+ */
+function injectOptionalEvents(action) {
+  let hide = action === "hideOptionalEvents";
+  document.querySelectorAll("div.GTG3wb.Epw9Dc").forEach(function(element, index) {
+    if (hide) {
+      element.style.display = "none";
+    }
+    else {
+      element.style.opacity = 0.2;
+    }
+  });
+
+  // Nasty little hack for whe we're viewing the Day - for some reason, Calendar
+  // paints the screen twice
+  if (!document.alreadyRun) {
+    setTimeout(function() {
+      injectOptionalEvents(action)
+      document.alreadyRun = true;
+    }, 1000);
+  }
+}
 
 /**
  * Called whenever a page is loaded in the browser or changes
@@ -84,11 +121,13 @@ chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
  * @param details The event details containing th URL and tab ID
  */
 function checkAction(details) {
-  if (storageCache.hideOptionalEvents && /https:\/\/calendar.google.com\/calendar\/u\/0\/r.*/.test(details.url)) {
-    console.log("Running script in " + details.tabId + " for " + details.url);
+  if ((storageCache.optionalEvents !== "showOptionalEvents") &&
+       /https:\/\/calendar.google.com\/calendar\/u\/0\/r.*/.test(details.url)) {
+
     chrome.scripting.executeScript({
       target: { tabId: details.tabId },
-      files: ["content.js"]
+      func: injectOptionalEvents,
+      args: [storageCache.optionalEvents]
     });
   }
 }

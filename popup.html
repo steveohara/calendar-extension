@@ -5,22 +5,35 @@
     <title>Google Calendar Settings</title>
     <style>
       body {
-        min-width: 300px;
-        font-size: 15px;
+        font-size: 10pt;
+        padding: 0 5px 5px;
+        min-width: 250px;
       }
-      input {
+      h2 {
+        font-size: 1.2em;
+      }
+      div {
         margin: 5px;
-        outline: none;
       }
     </style>
   </head>
 
   <body>
     <h2>Google Calendar Settings</h2>
-    <form id="optionsForm">
-      <label for="hideOptionalEvents">
-        <input type="checkbox" name="hideOptionalEvents" id="hideOptionalEvents">Hide Optional Events
-      </label>
-    </form>
+    <div>
+    <label for="showOptionalEvents">
+      <input type="radio" name="optionalEvents" id="showOptionalEvents" value="showOptionalEvents">Show Optional Events
+    </label>
+    </div>
+    <div>
+    <label for="hideOptionalEvents">
+      <input type="radio" name="optionalEvents" id="hideOptionalEvents" value="hideOptionalEvents">Hide Optional Events
+    </label>
+    </div>
+    <div>
+    <label for="deEmphasiseOptionalEvents">
+      <input type="radio" name="optionalEvents" id="deEmphasiseOptionalEvents" value="deEmphasiseOptionalEvents">De-Emphasise Optional Events
+    </label>
+    </div>
   </body>
 </html>

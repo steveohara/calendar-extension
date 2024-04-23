@@ -14,15 +14,24 @@
 
 // In-page cache of the user's options
 const options = {};
-const optionsForm = document.getElementById("optionsForm");
 
 // Immediately persist options changes
-optionsForm.hideOptionalEvents.addEventListener("change", (event) => {
-  options.hideOptionalEvents = event.target.checked;
+document.getElementById("showOptionalEvents").addEventListener("change", (event) => {
+  options.optionalEvents = event.target.value;
+  chrome.storage.sync.set(options);
+});
+document.getElementById("hideOptionalEvents").addEventListener("change", (event) => {
+  options.optionalEvents = event.target.value;
+  chrome.storage.sync.set(options);
+});
+document.getElementById("deEmphasiseOptionalEvents").addEventListener("change", (event) => {
+  options.optionalEvents = event.target.value;
   chrome.storage.sync.set(options);
 });
 
 // Initialize the form with the user's option settings
 const data = await chrome.storage.sync.get();
 Object.assign(options, data);
-optionsForm.hideOptionalEvents.checked = Boolean(options.hideOptionalEvents);
+document.getElementById("showOptionalEvents").checked = Boolean(options.optionalEvents === "showOptionalEvents");
+document.getElementById("hideOptionalEvents").checked = Boolean(options.optionalEvents === "hideOptionalEvents");
+document.getElementById("deEmphasiseOptionalEvents").checked = Boolean(options.optionalEvents === "deEmphasiseOptionalEvents");
