@@ -13,7 +13,11 @@
 // limitations under the License.
 
 // Where we will expose all the data we retrieve from storage.sync.
-const storageCache = { optionalEvents: "showOptionalEvents" };
+const storageCache = {
+  optionalEvents: "showOptionalEvents",
+  hideMornings: false,
+  hideMorningsTime: "08:00",
+};
 
 // Asynchronously retrieve data from storage.sync, then cache it.
 const initStorageCache = chrome.storage.sync.get().then((items) => {
@@ -64,7 +68,9 @@ chrome.runtime.onInstalled.addListener(function () {
 // Catch any changes to the storage whether they come from the context menu or the popup
 chrome.storage.onChanged.addListener((changes, namespace) => {
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-    chrome.contextMenus.update(newValue, {checked: true});
+    if (key === "optionalEvents") {
+      chrome.contextMenus.update(newValue, {checked: true});
+    }
     storageCache[key] = newValue;
   }
 
@@ -89,45 +95,73 @@ chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
 
 /**
  * This function is injected into the Calendar document space and carries
- * out the maniplation of the DOM based on the action
+ * out the manipulation of the DOM based on the action
  *
  * @param action Type of action to carry out
+ * @param hideMornings True if we should hide the morning part of the calendar
+ * @param hideMorningsTime The time we should hide till
  */
-function injectOptionalEvents(action) {
-  let hide = action === "hideOptionalEvents";
-  document.querySelectorAll("div.GTG3wb.Epw9Dc").forEach(function(element, index) {
-    if (hide) {
-      element.style.display = "none";
-    }
-    else {
-      element.style.opacity = 0.2;
-    }
-  });
+function injectOptionalEvents(action, hideMornings, hideMorningsTime) {
 
-  // Nasty little hack for whe we're viewing the Day - for some reason, Calendar
-  // paints the screen twice
-  if (!document.alreadyRun) {
+  // Check if we are changing the optional events
+  if (action !== "showOptionalEvents") {
+    let hide = action === "hideOptionalEvents"
+    document.querySelectorAll("div.GTG3wb.Epw9Dc").forEach(function (element, index) {
+      if (hide) {
+        element.style.display = "none";
+      }
+      else {
+        element.style.opacity = 0.2;
+      }
+    });
+  }
+
+  // Are we trying to hide the morning
+  if (hideMornings && hideMorningsTime !== "") {
+    let time = hideMorningsTime.replace(/[:].+/g, "") * 1;
+    time = time > 12 ? ((time - 12) + "PM") : (time + " AM")
+    document.querySelectorAll("span.wO6pL.iHNmdb").forEach(function (element, index) {
+      if (element.innerText === time) {
+        let offset = element.closest("div.RuAPDb.T8M5bd").getBoundingClientRect().y +
+                              element.getBoundingClientRect().y;
+        document.querySelector("div.uEzZIb").style.marginTop = -offset + "px";
+      }
+    });
+  }
+
+  // Calendar builds in phases, so we can't be sure that it's all
+  // painted at this stage so we will check for the presence of parts of the DOM
+  // as an indicator that it's ready and keep trying until it is
+  if (!document.alreadyRun || document.alreadyRun < 5) {
     setTimeout(function() {
       injectOptionalEvents(action)
-      document.alreadyRun = true;
+      document.alreadyRun = document.alreadyRun ? document.alreadyRun + 1 : 1;
     }, 1000);
   }
+  document.alreadyRun = document.querySelector("span.wO6pL.iHNmdb") ? 5 : document.alreadyRun;
 }
 
 /**
- * Called whenever a page is loaded in the browser or changes
+ * Called whenever a page is loaded in the browser or it changes
  * It checks to see if it's a Google Calendar and if the option is enabled
  * and if so, will inject the code that actually does the hiding of screen elements
- * @param details The event details containing th URL and tab ID
+ * @param details The event details containing the URL and tab ID
  */
 function checkAction(details) {
-  if ((storageCache.optionalEvents !== "showOptionalEvents") &&
-       /https:\/\/calendar.google.com\/calendar\/u\/0\/r.*/.test(details.url)) {
+  if (/https:\/\/calendar.google.com\/calendar\/u\/0\/r.*/.test(details.url)) {
 
-    chrome.scripting.executeScript({
-      target: { tabId: details.tabId },
-      func: injectOptionalEvents,
-      args: [storageCache.optionalEvents]
-    });
+    // Check if we need to change the visibility of the optional events
+    // and/or do something else with the display
+    if (storageCache.optionalEvents !== "showOptionalEvents" || storageCache.hideMornings) {
+      chrome.scripting.executeScript({
+        target: {tabId: details.tabId},
+        func: injectOptionalEvents,
+        args: [
+                storageCache.optionalEvents,
+                storageCache.hideMornings,
+                storageCache.hideMorningsTime
+        ]
+      });
+    }
   }
 }

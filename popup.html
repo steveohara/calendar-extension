@@ -1,39 +1,54 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <script defer src="popup.js" type="module"></script>
     <title>Google Calendar Settings</title>
     <style>
-      body {
-        font-size: 10pt;
-        padding: 0 5px 5px;
-        min-width: 250px;
-      }
-      h2 {
-        font-size: 1.2em;
-      }
-      div {
-        margin: 5px;
-      }
+        body {
+            font-size: 10pt;
+            padding: 0 5px 5px;
+            min-width: 250px;
+        }
+        h2 {
+            font-size: 1.2em;
+        }
+        div {
+            margin: 5px;
+        }
+        div.hideMornings {
+          margin-bottom: 10px;
+        }
+        #hideMorningsTime  {
+          margin-left: 6px;
+          border: 1px solid darkgrey;
+          border-radius: 4px;
+          padding-left: 4px;
+        }
     </style>
-  </head>
+</head>
 
-  <body>
-    <h2>Google Calendar Settings</h2>
-    <div>
+<body>
+<h2>Google Calendar Settings</h2>
+<div class="hideMornings">
+    <label for="hideMornings">
+        <input type="checkbox" name="hideMornings" id="hideMornings" value="hideMornings">Hide mornings until
+        <input type="time" name="hideMorningsTime" id="hideMorningsTime" step="1800" value="08:00:00">
+    </label>
+</div>
+<div>
     <label for="showOptionalEvents">
-      <input type="radio" name="optionalEvents" id="showOptionalEvents" value="showOptionalEvents">Show Optional Events
+        <input type="radio" name="optionalEvents" id="showOptionalEvents" value="showOptionalEvents">Show Optional Events
     </label>
-    </div>
-    <div>
+</div>
+<div>
     <label for="hideOptionalEvents">
-      <input type="radio" name="optionalEvents" id="hideOptionalEvents" value="hideOptionalEvents">Hide Optional Events
+        <input type="radio" name="optionalEvents" id="hideOptionalEvents" value="hideOptionalEvents">Hide Optional Events
     </label>
-    </div>
-    <div>
+</div>
+<div>
     <label for="deEmphasiseOptionalEvents">
-      <input type="radio" name="optionalEvents" id="deEmphasiseOptionalEvents" value="deEmphasiseOptionalEvents">De-Emphasise Optional Events
+        <input type="radio" name="optionalEvents" id="deEmphasiseOptionalEvents" value="deEmphasiseOptionalEvents">De-Emphasise Optional Events
     </label>
-    </div>
-  </body>
+</div>
+</body>
 </html>

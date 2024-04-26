@@ -4,13 +4,16 @@ some effort in creating a new Google Calendar Extension e.g. hiding events where
 Optional or, filtering on colour etc.
 
 These sorts of things should be in the product but alas, not yet and I don't have the time to 
-create a proper Calendar plugin so this is the next best thing. Filter out the events using some CSS hacks.
+create a proper Calendar plugin so this is the next best thing. Filter out the elements using some CSS hacks.
 
 It's pretty simple, the extension has the option to hide the events on the screen that are
 designated as being optional by scanning the DOM and making the screen elements `display:none` or to 
 make the optional events almost transparent with `opacity:0.2`
 
 You can turn on the feature from either the icon on the toolbar or from a context menu.
+
+You can also hide everything in the Calendar up until a specific time i.e. don't bother showing events
+that are before your working day even begins.
 
 The settings are persistent, and they are synced across browsers on different machines via your profile.
 

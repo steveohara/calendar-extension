@@ -29,9 +29,20 @@ document.getElementById("deEmphasiseOptionalEvents").addEventListener("change", 
   chrome.storage.sync.set(options);
 });
 
+document.getElementById("hideMornings").addEventListener("change", (event) => {
+  options.hideMornings = event.target.checked;
+  chrome.storage.sync.set(options);
+});
+document.getElementById("hideMorningsTime").addEventListener("change", (event) => {
+  options.hideMorningsTime = event.target.value;
+  chrome.storage.sync.set(options);
+});
+
 // Initialize the form with the user's option settings
 const data = await chrome.storage.sync.get();
 Object.assign(options, data);
 document.getElementById("showOptionalEvents").checked = Boolean(options.optionalEvents === "showOptionalEvents");
 document.getElementById("hideOptionalEvents").checked = Boolean(options.optionalEvents === "hideOptionalEvents");
 document.getElementById("deEmphasiseOptionalEvents").checked = Boolean(options.optionalEvents === "deEmphasiseOptionalEvents");
+document.getElementById("hideMornings").checked = options.hideMornings;
+document.getElementById("hideMorningsTime").checked = options.hideMorningsTime;
