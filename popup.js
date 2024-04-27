@@ -45,4 +45,4 @@ document.getElementById("showOptionalEvents").checked = Boolean(options.optional
 document.getElementById("hideOptionalEvents").checked = Boolean(options.optionalEvents === "hideOptionalEvents");
 document.getElementById("deEmphasiseOptionalEvents").checked = Boolean(options.optionalEvents === "deEmphasiseOptionalEvents");
 document.getElementById("hideMornings").checked = options.hideMornings;
-document.getElementById("hideMorningsTime").checked = options.hideMorningsTime;
+document.getElementById("hideMorningsTime").value = options.hideMorningsTime;

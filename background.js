@@ -118,13 +118,18 @@ function injectOptionalEvents(action, hideMornings, hideMorningsTime) {
 
   // Are we trying to hide the morning
   if (hideMornings && hideMorningsTime !== "") {
-    let time = hideMorningsTime.replace(/[:].+/g, "") * 1;
-    time = time > 12 ? ((time - 12) + "PM") : (time + " AM")
+    let hour = hideMorningsTime.replace(/[:].+/g, "") * 1;
+    let time = hour > 12 ? ((hour - 12) + " PM") : (hour + " AM")
     document.querySelectorAll("span.wO6pL.iHNmdb").forEach(function (element, index) {
       if (element.innerText === time) {
-        let offset = element.closest("div.RuAPDb.T8M5bd").getBoundingClientRect().y +
-                              element.getBoundingClientRect().y;
+        let offset = element.parentElement.offsetTop + element.offsetTop;
+        setTimeout(function() {
+          document.querySelector("div.uEzZIb").style.marginTop = -offset + "px";
+        }, 500);
         document.querySelector("div.uEzZIb").style.marginTop = -offset + "px";
+        if (new Date().getHours() <= hour) {
+          document.getElementsByClassName("mDPmMe")[0].scrollTop = "0px";
+        }
       }
     });
   }
@@ -136,7 +141,7 @@ function injectOptionalEvents(action, hideMornings, hideMorningsTime) {
     setTimeout(function() {
       injectOptionalEvents(action)
       document.alreadyRun = document.alreadyRun ? document.alreadyRun + 1 : 1;
-    }, 1000);
+    }, 500);
   }
   document.alreadyRun = document.querySelector("span.wO6pL.iHNmdb") ? 5 : document.alreadyRun;
 }
