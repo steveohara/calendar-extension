@@ -17,11 +17,13 @@ const storageCache = {
   optionalEvents: "showOptionalEvents",
   hideMornings: false,
   hideMorningsTime: "08:00",
+  tabs: []
 };
 
 // Asynchronously retrieve data from storage.sync, then cache it.
 const initStorageCache = chrome.storage.sync.get().then((items) => {
-  Object.assign(storageCache, items);
+  Object.keys(storageCache).forEach((key) => storageCache[key] = items[key] ? items[key] : storageCache[key]);
+  chrome.storage.sync.set(storageCache);
 });
 
 // A generic onclick callback function
@@ -67,19 +69,25 @@ chrome.runtime.onInstalled.addListener(function () {
 
 // Catch any changes to the storage whether they come from the context menu or the popup
 chrome.storage.onChanged.addListener((changes, namespace) => {
+  let refreshRequired = true;
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
     if (key === "optionalEvents") {
       chrome.contextMenus.update(newValue, {checked: true});
     }
     storageCache[key] = newValue;
+    if (key === "tabs") {
+      refreshRequired = false;
+    }
   }
 
-  // Reload any calendar tabs
-  chrome.tabs.query({url: "https://calendar.google.com/calendar/u/0/r*"}, function(tabs) {
-    tabs.forEach(function(tab) {
-      chrome.tabs.reload(tab.id);
-    })
-  });
+  // Reload any calendar tabs if this is a change that affects them
+  if (refreshRequired) {
+    chrome.tabs.query({url: "https://calendar.google.com/calendar/u/0/r*"}, function (tabs) {
+      tabs.forEach(function (tab) {
+        chrome.tabs.reload(tab.id);
+      })
+    });
+  }
 });
 
 // Catch the loading of pages from scratch

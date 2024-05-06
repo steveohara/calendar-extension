@@ -13,36 +13,119 @@
 // limitations under the License.
 
 // In-page cache of the user's options
-const options = {};
+const options = await chrome.storage.sync.get();
 
-// Immediately persist options changes
-document.getElementById("showOptionalEvents").addEventListener("change", (event) => {
-  options.optionalEvents = event.target.value;
-  chrome.storage.sync.set(options);
-});
-document.getElementById("hideOptionalEvents").addEventListener("change", (event) => {
-  options.optionalEvents = event.target.value;
-  chrome.storage.sync.set(options);
-});
-document.getElementById("deEmphasiseOptionalEvents").addEventListener("change", (event) => {
-  options.optionalEvents = event.target.value;
-  chrome.storage.sync.set(options);
-});
+// Get a reference to the useful elements
+const showOptionalEvents =  document.getElementById("showOptionalEvents");
+const hideOptionalEvents =  document.getElementById("hideOptionalEvents");
+const deEmphasiseOptionalEvents =  document.getElementById("deEmphasiseOptionalEvents");
+const hideMornings = document.getElementById("hideMornings");
+const hideMorningsTime = document.getElementById("hideMorningsTime");
+const savedTabs = document.getElementById("savedTabs");
+const tabSnapshot = document.getElementById("tabSnapshot");
+const tabSnapshotName = document.getElementById("tabSnapshotName");
 
-document.getElementById("hideMornings").addEventListener("change", (event) => {
+// Immediately persist options changes to any of the Calender inputs
+[showOptionalEvents, hideOptionalEvents, deEmphasiseOptionalEvents].forEach((option) => {
+  option.addEventListener("change", (event) => {
+    options.optionalEvents = event.target.value;
+    chrome.storage.sync.set(options);
+  });
+})
+hideMornings.addEventListener("change", (event) => {
   options.hideMornings = event.target.checked;
   chrome.storage.sync.set(options);
 });
-document.getElementById("hideMorningsTime").addEventListener("change", (event) => {
+hideMorningsTime.addEventListener("change", (event) => {
   options.hideMorningsTime = event.target.value;
   chrome.storage.sync.set(options);
 });
 
+// Add a new snapshot if we have a name
+tabSnapshot.addEventListener("click", (event) => {
+  if (tabSnapshotName.value.trim() === "") {
+    alert("Must give the snapshot a name");
+  }
+  else {
+    chrome.windows.getCurrent({
+      populate: true
+    }).then(function (window) {
+      let selectedTab = 0;
+      let tabUrls = [];
+      window.tabs.forEach(function(tab, index) {
+        tabUrls.push(tab.url);
+        if (tab.highlighted) {
+          selectedTab = index;
+        }
+      })
+      options.tabs.push({
+        name: tabSnapshotName.value,
+        activeTab: selectedTab,
+        tabs: tabUrls
+      });
+      chrome.storage.sync.set(options);
+      tabSnapshotName.value = "";
+      displayTabs();
+    });
+  }
+});
+
 // Initialize the form with the user's option settings
-const data = await chrome.storage.sync.get();
-Object.assign(options, data);
-document.getElementById("showOptionalEvents").checked = Boolean(options.optionalEvents === "showOptionalEvents");
-document.getElementById("hideOptionalEvents").checked = Boolean(options.optionalEvents === "hideOptionalEvents");
-document.getElementById("deEmphasiseOptionalEvents").checked = Boolean(options.optionalEvents === "deEmphasiseOptionalEvents");
-document.getElementById("hideMornings").checked = options.hideMornings;
-document.getElementById("hideMorningsTime").value = options.hideMorningsTime;
+showOptionalEvents.checked = Boolean(options.optionalEvents === "showOptionalEvents");
+hideOptionalEvents.checked = Boolean(options.optionalEvents === "hideOptionalEvents");
+deEmphasiseOptionalEvents.checked = Boolean(options.optionalEvents === "deEmphasiseOptionalEvents");
+hideMornings.checked = options.hideMornings;
+hideMorningsTime.value = options.hideMorningsTime;
+
+/**
+ * Displays the tabs in the popup
+ */
+function displayTabs() {
+  let tmp = "<table>"
+  let count = 0;
+  options.tabs.forEach((tab) => {
+    tmp += "<tr><td><a class='show' id='show" + count + "' title='Replace curent tabs with (" + tab.tabs.length + ") from storage'>" + tab.name + "</a></td>" +
+           "<td><a class='delete' id='delete" + count + "' title='Delete this tab group'>&#128465;</a></td></tr>";
+    count++;
+  });
+  tmp += "</table>";
+  savedTabs.innerHTML = tmp;
+
+  // Add action handlers for deleting and showing
+  document.querySelectorAll("#savedTabs a").forEach((element) => {
+    element.addEventListener("click", (event) => {
+
+      // Check if this is a delete action
+      if (/delete[0-9]+/.test(event.target.id)) {
+        options.tabs.splice(event.target.id.replace("delete", ""), 1);
+        chrome.storage.sync.set(options);
+        displayTabs();
+      }
+
+      // Are we showing some tabs?
+      else if (/show[0-9]+/.test(event.target.id)) {
+
+        // Close all the tabs and add those selected back
+        chrome.windows.getCurrent({populate: true}).then(function(window) {
+          let tabIds = [];
+          window.tabs.forEach((tab) => {
+            tabIds.push(tab.id);
+          })
+
+          // Need to add all the new tabs first, otherwise the window will close
+          let snapshot = options.tabs[event.target.id.replace("show", "") * 1];
+          snapshot.tabs.forEach(function(tab, index) {
+            chrome.tabs.create({
+              url: tab,
+              active: snapshot.activeTab===index
+            })
+          });
+          chrome.tabs.remove(tabIds);
+        });
+      }
+    });
+  });
+}
+
+// Show all the tabs
+displayTabs();

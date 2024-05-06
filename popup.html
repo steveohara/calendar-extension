@@ -7,10 +7,13 @@
         body {
             font-size: 10pt;
             padding: 0 5px 5px;
-            min-width: 250px;
+            min-width: 280px;
         }
         h2 {
             font-size: 1.2em;
+        }
+        h2.tabSaver {
+            margin-bottom: 0;
         }
         div {
             margin: 5px;
@@ -18,11 +21,48 @@
         div.hideMornings {
           margin-bottom: 10px;
         }
-        #hideMorningsTime  {
+        input  {
           margin-left: 6px;
           border: 1px solid darkgrey;
           border-radius: 4px;
           padding-left: 4px;
+        }
+        #tabSnapshot {
+            font-size: 0.7em;
+            padding: 2px;
+        }
+        a:hover {
+            color: darkblue;
+            cursor: pointer;
+        }
+        a.delete {
+            padding: 1px;
+            border: 1px solid grey;
+            background-color: lightgrey;
+            display: block;
+            border-radius: 4px;
+        }
+        #savedTabs {
+            padding:0;
+            margin:0;
+        }
+        .tabSaver > label {
+            margin-left: 8px;
+        }
+        #savedTabs table {
+            margin-bottom: 20px;
+            width: 260px;
+        }
+        #savedTabs table td {
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+        }
+        #savedTabs table tr td:first-of-type {
+            width: 100%;
+        }
+        #tabSnapshotName {
+            padding-top: 3px;
+            padding-bottom: 3px;
         }
     </style>
 </head>
@@ -50,5 +90,14 @@
         <input type="radio" name="optionalEvents" id="deEmphasiseOptionalEvents" value="deEmphasiseOptionalEvents">De-Emphasise Optional Events
     </label>
 </div>
+
+<h2 class="tabSaver">Tab Saver</h2>
+<div class="tabSaver">
+    <div id="savedTabs"></div>
+    <label for="tabSnapshotName">New:</label>
+    <input type="text" name="tabSnapshotName" id="tabSnapshotName" placeholder="Name to give the tab group">
+    <button name="tabSnapshot" id="tabSnapshot" title="Create a new tab group from the tabs on this window">&#10133;</button>
+</div>
+
 </body>
 </html>
