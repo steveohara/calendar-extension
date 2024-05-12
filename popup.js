@@ -25,7 +25,7 @@ const savedTabs = document.getElementById("savedTabs");
 const tabSnapshot = document.getElementById("tabSnapshot");
 const tabSnapshotName = document.getElementById("tabSnapshotName");
 
-// Immediately persist options changes to any of the Calender inputs
+// Immediately persist options changes to any of the Calendar inputs
 [showOptionalEvents, hideOptionalEvents, deEmphasiseOptionalEvents].forEach((option) => {
   option.addEventListener("change", (event) => {
     options.optionalEvents = event.target.value;
@@ -40,9 +40,25 @@ hideMorningsTime.addEventListener("change", (event) => {
   options.hideMorningsTime = event.target.value;
   chrome.storage.sync.set(options);
 });
+tabSnapshotName.addEventListener("keypress", (e) => {
+  if (e.code === "Enter") {
+    addNewSnapshot();
+    e.preventDefault();
+  }
+});
+tabSnapshot.addEventListener("click", addNewSnapshot);
 
-// Add a new snapshot if we have a name
-tabSnapshot.addEventListener("click", (event) => {
+// Initialize the form with the user's option settings
+showOptionalEvents.checked = Boolean(options.optionalEvents === "showOptionalEvents");
+hideOptionalEvents.checked = Boolean(options.optionalEvents === "hideOptionalEvents");
+deEmphasiseOptionalEvents.checked = Boolean(options.optionalEvents === "deEmphasiseOptionalEvents");
+hideMornings.checked = options.hideMornings;
+hideMorningsTime.value = options.hideMorningsTime;
+
+/**
+ * Attempts to add a new snapshot to the list
+ */
+function addNewSnapshot() {
   if (tabSnapshotName.value.trim() === "") {
     alert("Must give the snapshot a name");
   }
@@ -68,14 +84,7 @@ tabSnapshot.addEventListener("click", (event) => {
       displayTabs();
     });
   }
-});
-
-// Initialize the form with the user's option settings
-showOptionalEvents.checked = Boolean(options.optionalEvents === "showOptionalEvents");
-hideOptionalEvents.checked = Boolean(options.optionalEvents === "hideOptionalEvents");
-deEmphasiseOptionalEvents.checked = Boolean(options.optionalEvents === "deEmphasiseOptionalEvents");
-hideMornings.checked = options.hideMornings;
-hideMorningsTime.value = options.hideMorningsTime;
+}
 
 /**
  * Displays the tabs in the popup
@@ -84,8 +93,11 @@ function displayTabs() {
   let tmp = "<table>"
   let count = 0;
   options.tabs.forEach((tab) => {
-    tmp += "<tr><td><a class='show' id='show" + count + "' title='Replace curent tabs with (" + tab.tabs.length + ") from storage'>" + tab.name + "</a></td>" +
-           "<td><a class='delete' id='delete" + count + "' title='Delete this tab group'>&#128465;</a></td></tr>";
+    tmp += `<tr>
+            <td><a class='show' id='show${count}' title='Replace current tabs with (${tab.tabs.length}) from storage'>${tab.name}</a></td>
+            <td><a class='showwindow' id='showwindow${count}' title='Show this tab group in a new window'>&#10063;</a></td>
+            <td><a class='delete' id='delete${count}' title='Delete this tab group'>&#128465;</a></td>
+            </tr>`;
     count++;
   });
   tmp += "</table>";
@@ -105,7 +117,7 @@ function displayTabs() {
       // Are we showing some tabs?
       else if (/show[0-9]+/.test(event.target.id)) {
 
-        // Close all the tabs and add those selected back
+        // Close all the tabs and add the selected tag group back
         chrome.windows.getCurrent({populate: true}).then(function(window) {
           let tabIds = [];
           window.tabs.forEach((tab) => {
@@ -123,8 +135,24 @@ function displayTabs() {
           chrome.tabs.remove(tabIds);
         });
       }
+
+      // Are we showing some tabs in a new window?
+      else if (/showwindow[0-9]+/.test(event.target.id)) {
+        let snapshot = options.tabs[event.target.id.replace("showwindow", "") * 1];
+        chrome.windows.create({}, function(window) {
+          snapshot.tabs.forEach(function(tab, index) {
+            chrome.tabs.create({
+              windowId: window.id,
+              url: tab,
+              active: snapshot.activeTab===index
+            })
+          });
+          chrome.tabs.remove(window.tabs[0].id);
+        });
+      }
     });
   });
+  tabSnapshotName.focus();
 }
 
 // Show all the tabs
