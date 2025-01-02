@@ -100,6 +100,13 @@ chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
   checkAction(details)
 });
 
+// Catch when we have received data for the 'Find a Time' display
+chrome.webRequest.onCompleted.addListener((details) => {
+    checkAction(details)
+  },
+  {urls : ["https://calendar.google.com/calendar/u/0/clienthealth"]}
+);
+
 
 /**
  * This function is injected into the Calendar document space and carries

@@ -11,7 +11,8 @@
     "webNavigation",
     "scripting",
     "tabs",
-    "activeTab"
+    "activeTab",
+    "webRequest"
   ],
   "background": {
     "service_worker": "background.js"
